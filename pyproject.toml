@@ -1,15 +1,23 @@
 [project]
 name = "advanced-chatbot"
 version = "0.1.0"
-description = "Advanced chatbot with memory"
-readme = "README.md"
-requires-python = ">=3.12.11"
-authors = [
-  { name = "Jaime", email = "jaimelucena93@gmail.com" }
-]
+description = "Backend FastAPI with LangChain LCEL + LangGraph, persistent & temporal memory"
+requires-python = ">=3.10"
 dependencies = [
-  "langchain~=0.2.11",
-  "langchain-openai~=0.1.20",
-  "python-dotenv~=1.0.1",
-  "langchain-community~=0.2.10",
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "pydantic>=2.8",
+  "python-dotenv>=1.0",
+  # LangChain core v0.3+ and utilities
+  "langchain>=0.3.0",
+  "langchain-core>=0.3.0",
+  "langchain-text-splitters>=0.3.0",
+  # Default model (replaceable by Azure/OpenAI/others)
+  "langchain-openai>=0.2.0",
+  # LangGraph + SQLite checkpointer (persistence)
+  "langgraph>=0.2.39",
+  "langgraph-checkpoint-sqlite>=2.0.0",
 ]
+
+[tool.uvicorn]
+factory = false
