@@ -1,0 +1,15 @@
+[project]
+name = "advanced-chatbot"
+version = "0.1.0"
+description = "Advanced chatbot with memory"
+readme = "README.md"
+requires-python = ">=3.12.11"
+authors = [
+  { name = "Jaime", email = "jaimelucena93@gmail.com" }
+]
+dependencies = [
+  "langchain~=0.2.11",
+  "langchain-openai~=0.1.20",
+  "python-dotenv~=1.0.1",
+  "langchain-community~=0.2.10",
+]
