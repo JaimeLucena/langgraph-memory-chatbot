@@ -11,3 +11,6 @@ wheels/
 
 # Secrets
 .env
+
+# Ignore conversation memory database
+.data/*.sqlite

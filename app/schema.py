@@ -1,4 +1,3 @@
-from __future__ import annotations
 from pydantic import BaseModel, Field
 from typing import Literal, Optional, Dict, Any
 
@@ -16,4 +15,3 @@ class ChatResponse(BaseModel):
     mode: MemoryMode
     tokens_input: Optional[int] = None
     tokens_output: Optional[int] = None
-    # You can add streaming support in the future if needed
