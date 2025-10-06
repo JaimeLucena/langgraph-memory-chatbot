@@ -13,4 +13,4 @@ wheels/
 .env
 
 # Ignore conversation memory database
-.data/*.sqlite
+.data/*
