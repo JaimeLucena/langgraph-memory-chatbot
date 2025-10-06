@@ -1,73 +1,237 @@
-# Chatbot Backend — LangChain v0.3 + LCEL + LangGraph (Temporary & Persistent Memory)
+![Banner](./chatbot.gif)
+# 💬 LangGraph Memory Chatbot
 
-This backend provides a **FastAPI** service implementing a chatbot with:
+A production-ready conversational AI backend built with **LangChain**, **LangGraph**, and **FastAPI**. Features dual memory modes (temporary/persistent), tool integration, and a beautiful Streamlit UI.
 
-- **LCEL** for composable chains.  
-- **LangGraph** for orchestration.  
-- **Temporary memory** (`MemorySaver`) and **persistent memory** (`SqliteSaver`).  
-- **Message trimming** with `trim_messages` to keep context window under control.  
+## ✨ Features
 
----
+- 🔄 **Dual Memory Modes**
+  - **Temporary**: In-memory conversations (MemorySaver)
+  - **Persistent**: SQLite-backed conversation history
+- 🛠️ **Tool Integration**
+  - Wikipedia summaries (`/wiki <topic>`)
+  - Weather information (`/weather <city>`)
+- 🎯 **Smart Context Management**
+  - Automatic message trimming (1200 tokens)
+  - Prevents context overflow
+- 🚀 **FastAPI Backend**
+  - RESTful API with Pydantic validation
+  - Session-based conversation management
+- 🎨 **Streamlit UI**
+  - Clean, intuitive chat interface
+  - Real-time configuration
+  - Session management controls
 
-## Requirements
+## 🏗️ Architecture
 
-- Python 3.10+  
-- One of the following package managers:  
-  - [`uv`](https://docs.astral.sh/uv/) (recommended, fastest)  
-  - [Poetry](https://python-poetry.org/)  
-  - Standard `pip`  
+```
+┌─────────────┐
+│ Streamlit UI│
+└──────┬──────┘
+       │ HTTP POST
+       ▼
+┌─────────────┐
+│  FastAPI    │
+│   Backend   │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────────────────┐
+│      LangGraph          │
+│  ┌─────────────────┐    │
+│  │   respond_node  │    │
+│  └────────┬────────┘    │
+│           │             │
+│    ┌──────▼──────┐      │
+│    │ needs_tools?│      │
+│    └──────┬──────┘      │
+│           │             │
+│    ┌──────▼──────┐      │
+│    │ tools_node  │      │
+│    └─────────────┘      │
+└─────────────────────────┘
+       │
+       ▼
+┌─────────────┐
+│  OpenAI API │
+└─────────────┘
+```
 
-- An API key for your preferred LLM provider (e.g., OpenAI).  
-- (Optional) A `.data/` directory for SQLite persistence.
+## 📦 Installation
 
----
+### Prerequisites
 
-## Installation
+- Python 3.9+
+- OpenAI API key
 
-### Option 1 — Using **uv** (recommended)
+### Setup
 
-# Clone the project
-git clone https://github.com/your-org/chatbot-backend.git
-cd chatbot-backend
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/JaimeLucena/langgraph-memory-chatbot.git
+   cd langgraph-memory-chatbot
+   ```
 
-# Install all dependencies (creates and manages virtualenv automatically)
-uv sync
+2. **Install dependencies**
+   ```bash
+   uv sync
+   ```
 
-# Prepare environment variables and SQLite folder
-cp .env.example .env
-mkdir -p .data 
+3. **Configure environment**
+   
+   Create a `.env` file in the root directory:
+   ```env
+   OPENAI_API_KEY=your_api_key_here
+   OPENAI_MODEL=gpt-4o-mini
+   SQLITE_PATH=data/memory.sqlite
+   SYSTEM_PROMPT=You are a helpful and concise assistant.
+   ```
 
-### Option 2 — Using **poetry**
-git clone https://github.com/your-org/chatbot-backend.git
-cd chatbot-backend
+4. **Create data directory**
+   ```bash
+   mkdir -p data
+   ```
 
-poetry install
-cp .env.example .env
-mkdir -p .data
+## 🚀 Usage
 
-### Option 3 — Using pip (classic)
-git clone https://github.com/your-org/chatbot-backend.git
-cd chatbot-backend
+### Start the Backend
 
-python -m venv .venv
-source .venv/bin/activate
-pip install -U pip
-pip install -e .
-cp .env.example .env
-mkdir -p .data
-
-## Architecture Notes
-•	Persistence (recommended):
-        Current LangChain docs suggest using LangGraph checkpointers (e.g. SqliteSaver, PostgresSaver) for memory, instead of older memory APIs.
-•	Temporary vs Persistent:
-•	MemorySaver: in-memory (RAM), volatile, resets on restart.
-•	SqliteSaver: saves to SQLite for durability across restarts.
-•	Scalability:
-        For distributed or production deployments, prefer langgraph-checkpoint-postgres for persistence.
-•	Context control:
-        trim_messages ensures that only the relevant portion of the conversation is sent to the LLM.
-
-## Execution
+```bash
 uv run uvicorn app.main:app --reload --port 8000
-poetry run uvicorn app.main:app --reload --port 8000
-uvicorn app.main:app --reload --port 8000
+```
+
+The API will be available at `http://localhost:8000`
+
+### Start the UI
+
+In a separate terminal:
+
+```bash
+uv run streamlit run app/ui.py
+```
+
+The UI will open automatically in your browser at `http://localhost:8501`
+
+## 🔧 API Reference
+
+### POST `/chat`
+
+Send a message and receive a response.
+
+**Request Body:**
+```json
+{
+  "session_id": "unique-session-identifier",
+  "message": "Hello, how are you?",
+  "memory": "persistent",
+  "metadata": {}
+}
+```
+
+**Response:**
+```json
+{
+  "session_id": "unique-session-identifier",
+  "reply": "I'm doing well, thank you! How can I help you today?",
+  "mode": "persistent",
+  "tokens_input": null,
+  "tokens_output": null
+}
+```
+
+### Tool Commands
+
+Activate tools by using slash commands:
+
+- **Wikipedia**: `/wiki Python programming`
+- **Weather**: `/weather Madrid`
+
+## 📁 Project Structure
+
+```
+langgraph-memory-chatbot/
+├── app/
+│   ├── __init__.py
+│   ├── config.py          # Configuration & environment variables
+│   ├── schema.py          # Pydantic models
+│   ├── graph.py           # LangGraph workflow definition
+│   ├── main.py            # FastAPI application
+│   └── ui.py              # Streamlit interface
+├── data/                  # Data directory (created automatically)
+│   └── memory.sqlite      # Persistent conversation storage
+├── venv/                  # Virtual environment (not in git)
+├── .env                   # Environment variables (not in git)
+├── .gitignore
+├── pyproject.toml         # Project configuration
+├── README.md
+└── uv.lock                # Dependency lock file
+```
+
+## 🛠️ Configuration
+
+All configuration is managed through environment variables in `.env`:
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `OPENAI_API_KEY` | Your OpenAI API key | Required |
+| `OPENAI_MODEL` | Model to use | `gpt-4o-mini` |
+| `SQLITE_PATH` | Path to SQLite database | `data/memory.sqlite` |
+| `SYSTEM_PROMPT` | System prompt for the AI | Default assistant prompt |
+
+## 🧪 Testing
+
+### Test the API directly
+
+```bash
+curl -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "session_id": "test-123",
+    "message": "Hello!",
+    "memory": "temporary"
+  }'
+```
+
+### Test Wikipedia tool
+
+In the UI or via API:
+```
+/wiki Albert Einstein
+```
+
+### Test Weather tool
+
+```
+/weather London
+```
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- [LangChain](https://github.com/langchain-ai/langchain) - Framework for LLM applications
+- [LangGraph](https://github.com/langchain-ai/langgraph) - Graph-based orchestration
+- [FastAPI](https://fastapi.tiangolo.com/) - Modern web framework
+- [Streamlit](https://streamlit.io/) - App framework for ML/AI
+
+## 📧 Contact
+
+Jaime Lucena - jaimelucena93@gmail.com
+
+Project Link: [https://github.com/JaimeLucena/langgraph-memory-chatbot](https://github.com/JaimeLucena/langgraph-memory-chatbot)
+
+---
+
+⭐ If you find this project useful, please consider giving it a star!
